@@ -6,32 +6,51 @@
           $routeProvider.when('/',{
                 templateUrl:"./templates/main.html",
                 controller:"MainController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: false
+                }
+
           });
           $routeProvider.when('/login',{
                 templateUrl:"./templates/login.html",
                 controller:"LoginController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: false
+                }
           });
           $routeProvider.when('/register',{
                 templateUrl:"./templates/register.html",
                 controller:"RegisterController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: false
+                }
           });
           $routeProvider.when('/polls',{
                 templateUrl:"./templates/polls.html",
                 controller:"PollsController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: false
+                }
           });
           $routeProvider.when('/polls/:id',{
                 templateUrl:"./templates/poll.html",
                 controller:"PollController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: false
+                }
           });
           $routeProvider.when('/profile',{
                 templateUrl:"./templates/profile.html",
                 controller:"ProfileController",
-                controllerAs:'vm'
+                controllerAs:'vm',
+                access: {
+                restricted: true
+                }
           });
       })
 
@@ -40,16 +59,27 @@
               vm.title = "MainController";
               console.log("1");
           });
-          
+
           app.controller('LoginController',function($location,$window){
               var vm = this;
               vm.title = "LoginController";
               console.log("2");
           });
           app.controller('RegisterController',RegisterController);
-          function RegisterController($location,$window){
+          function RegisterController($location,$window,$http){
               var vm = this;
               vm.title = "RegisterController";
+
+              vm.register = function(){
+                  if(!vm.user){
+                    console.log("Invalid User Credentials");
+                    return;
+                  }
+                  $http.post('/api/register',vm.user)
+                       .then(function(response) {
+                              console.log(response);
+                       })
+              }
           }
           app.controller('PollsController',PollsController);
           function PollsController($location,$window){

@@ -3,6 +3,9 @@ var db="mongodb://localhost:27017/votingapp";
 //port
 var port = 8000 || process.env.Port;
 
+//Load in Router
+var router = require('./routes/api')
+
 //Loading Modules
 var express = require('express');
 var morgan = require('morgan');
@@ -41,6 +44,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended:false }));
 app.use('/node_modules',express.static( __dirname + '/node_modules'));
 app.use(express.static( __dirname + '/public'));
+app.use('/api',router);
 app.get('*',function(req,res){
   res.sendFile(__dirname + '/public/index.html');
 });
