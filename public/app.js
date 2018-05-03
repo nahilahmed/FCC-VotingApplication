@@ -126,9 +126,62 @@
               }
           }
           app.controller('PollsController',PollsController);
-          function PollsController($location,$window){
+          function PollsController($location,$window,$http,jwtHelper){
               var vm = this;
+              vm.user = jwtHelper.decodeToken($window.localStorage.token);
+              var id = vm.user.data._id;
               vm.title = "PollsController";
+              vm.polls = [];
+              vm.poll={
+                name: '',
+                options: [],
+                user:id
+              }
+              vm.poll.options = [{
+                 name:'',
+                 votes:0
+              }]
+
+
+              vm.addOption = function(){
+                vm.poll.options.push({
+                  name:'',
+                  votes:0
+                })
+              }
+
+              vm.getAllPolls = function() {
+                $http.get('/api/polls').then(function(response) {
+//                    console.log(response);
+                      vm.polls = response.data;
+                    });
+                }
+              vm.getAllPolls();
+
+              vm.addPoll = function(){
+                console.log(vm.poll);
+                if(!vm.poll){
+                  console.log("Insufficient Data");
+                  return;
+                }
+                $http.post('/api/polls',vm.poll)
+                     .then(function(response) {
+                       console.log(response);
+                       vm.getAllPolls();
+                       vm.poll={
+                         name: '',
+                         options: [],
+                         user:id
+                       }
+                       vm.poll.options = [{
+                          name:'',
+                          votes:0
+                       }]
+                     },function(err){
+                       console.log("Here");
+                       console.log(err);
+                     })
+              }
           }
           app.controller('PollController',PollController);
           function PollController($location,$window){
@@ -144,6 +197,12 @@
               //console.log(payload);
               if(payload){
                 vm.user = payload;
+              }
+
+              vm.logOut = function(){
+                delete $window.localStorage.token;
+                vm.user = null;
+                $location.path('/login');
               }
           }
 }())

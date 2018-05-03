@@ -3,6 +3,39 @@ var router = express.Router({ caseSensitive : true });
 var bcrypt = require('bcrypt-nodejs');
 var jwt = require('jsonwebtoken');
 var User = require('../models/user.js');
+var Polls = require('../models/polls.js')
+
+router.get('/polls', function(request, response) {
+    Polls.find({}, function(err, polls) {
+        if (err) {
+            return response.status(404).send({})
+        } else {
+            return response.status(200).json(polls)
+        }
+    })
+});
+
+//POST polls
+
+router.post('/polls',authenticate,function(req,resp){
+    console.log(req.body);
+    if(!req.body){
+      return res.status(400).send("Invalid Data");
+    }
+
+    var poll = new Polls();
+    poll.user = req.body.user;
+    poll.name = req.body.name;
+    poll.options = req.body.options;
+
+    poll.save(function(err,res){
+        if(err){
+          return resp.status(400).send(err);
+        }
+        return resp.status(201).send(res)
+    })
+
+})
 
 //Token-Verification
 
@@ -79,7 +112,29 @@ router.post('/register',function(req,res) {
      }
 });
 
+//Authentication middleware
 
+function authenticate(request, response, next) {
+    var header = request.headers.authorization;
+    //console.log(header);
+    if (header) {
+        var token = header.split(' ')[1];
+        //console.log(token);
+        jwt.verify(token, process.env.secret, function(err, decoded) {
+            if (err) {
+                console.log("Invalid Token");
+                return response.status(401).json('Unauthorized request: invalid token')
+            }
+            else {
+                console.log("Continue with middleware chain");
+                next();
+            }
+        })
+    }
+    else {
+        return response.status(400).json('No token provided')
+    }
+}
 
 
 module.exports = router;
