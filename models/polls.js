@@ -1,29 +1,34 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var pollsSchema = new Schema({
-    user:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'User'
+var PollSchema = new Schema({
+    name: {
+        type: String,
+        required: true,
+        unique: true
     },
-    name:{
-        type:String,
-        required:true,
-        unique:true
-    },
-    options:[{
-        name:{
-          type:String,
-          required:true,
-          unique:true
-        },
-        votes:{
-          type:Number,
-          required:true,
-          default:0
+    options: [
+        {
+            name: {
+                type: String,
+                required: true
+            },
+            votes: {
+                default: 0,
+                type: Number
+            }
         }
-    }]
-})
+    ],
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    owner: {
+        type: String,
+        required: true
+    }
+});
 
-var Model = mongoose.model('Polls',pollsSchema);
+var Model = mongoose.model('Polls', PollSchema);
+
 module.exports = Model;

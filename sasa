@@ -1,10 +1,21 @@
-<br>
-<h3>{{vm.title}}</h3>
-<hr>
-<button class="btn btn-danger" ng-click="vm.logOut()">Logout</button>
-<hr>
-<h6>Welcome to FreeCodeCamp Voting Community, {{vm.currentUser.name}}</h6>
-<hr>
+function ProfileController($location,$window,jwtHelper){
+    var vm = this;
+    vm.title = "ProfileController";
+    var token = $window.localStorage.token;
+    var payload = jwtHelper.decodeToken(token).data;
+    //console.log(payload);
+    if(payload){
+      vm.user = payload;
+    }
+
+    vm.logOut = function(){
+      delete $window.localStorage.token;
+      vm.user = null;
+      $location.path('/login');
+    }
+}
+
+
 <div ng-if="vm.polls.length > 0">
 <h3>Your Polls</h3>
 <ul>

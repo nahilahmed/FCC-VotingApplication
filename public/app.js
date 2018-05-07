@@ -127,82 +127,124 @@
           }
           app.controller('PollsController',PollsController);
           function PollsController($location,$window,$http,jwtHelper){
-              var vm = this;
-              vm.user = jwtHelper.decodeToken($window.localStorage.token);
-              var id = vm.user.data._id;
-              vm.title = "PollsController";
-              vm.polls = [];
-              vm.poll={
+            var vm = this;
+            vm.title = "PollsController";
+            vm.polls = [];
+            vm.poll = {
+              name: '',
+              options: [{
                 name: '',
-                options: [],
-                user:id
-              }
-              vm.poll.options = [{
-                 name:'',
-                 votes:0
+                votes: 2
               }]
+            }
+        vm.isLoggedIn = function() {
+            if(!$window.localStorage.token) {
+                return false;
+            }
+            if(jwtHelper.decodeToken($window.localStorage.token)) {
+                return true;
+            }
+            return false;
+        }
+        vm.isLoggedIn();
 
 
-              vm.addOption = function(){
-                vm.poll.options.push({
-                  name:'',
-                  votes:0
-                })
-              }
+        vm.getAllPolls = function() {
+            $http.get('/api/polls').then(function(response) {
+                vm.polls = response.data;
+            });
+        }
+        vm.getAllPolls();
 
-              vm.getAllPolls = function() {
-                $http.get('/api/polls').then(function(response) {
-//                    console.log(response);
-                      vm.polls = response.data;
-                    });
+        vm.addPoll = function() {
+            if(!$window.localStorage.token) {
+                alert('Cannot create a poll without an account');
+                return;
+            }
+            if(vm.poll) {
+                var payload = {
+                    owner: jwtHelper.decodeToken($window.localStorage.token).data.name || null,
+                    name: vm.poll.name,
+                    options: vm.poll.options,
+                    token: $window.localStorage.token
                 }
-              vm.getAllPolls();
+                $http.post('/api/polls' , payload).then(onSuccess, onError);
+            }
+            else {
+                console.log('No poll data supplied');
+            }
+        }
+        vm.addOption = function() {
+            vm.poll.options.push({
+                name: '',
+                votes: 2
+            })
+        }
 
-              vm.addPoll = function(){
-                console.log(vm.poll);
-                if(!vm.poll){
-                  console.log("Insufficient Data");
-                  return;
-                }
-                $http.post('/api/polls',vm.poll)
-                     .then(function(response) {
-                       console.log(response);
-                       vm.getAllPolls();
-                       vm.poll={
-                         name: '',
-                         options: [],
-                         user:id
-                       }
-                       vm.poll.options = [{
-                          name:'',
-                          votes:0
-                       }]
-                     },function(err){
-                       console.log("Here");
-                       console.log(err);
-                     })
-              }
+        var onSuccess = function(response) {
+            console.log(response.data)
+            vm.poll = {};
+            vm.getAllPolls();
+        }
+        var onError = function(err) {
+            console.error(err)
           }
+      }
+
           app.controller('PollController',PollController);
           function PollController($location,$window){
               var vm = this;
               vm.title = "PollController";
           }
           app.controller('ProfileController',ProfileController);
-          function ProfileController($location,$window,jwtHelper){
-              var vm = this;
-              vm.title = "ProfileController";
-              var token = $window.localStorage.token;
-              var payload = jwtHelper.decodeToken(token).data;
-              //console.log(payload);
-              if(payload){
-                vm.user = payload;
-              }
+          function ProfileController(jwtHelper, $window, $location, $http, $timeout) {
+            var vm = this;
+            vm.title = "ProfileController";
+            vm.currentUser = null;
+            vm.polls = [];
+            var token = $window.localStorage.token;
 
-              vm.logOut = function(){
-                delete $window.localStorage.token;
-                vm.user = null;
-                $location.path('/login');
+            vm.getPollsByUser = function() {
+              $http.get('/api/user-polls/'+ vm.currentUser.name)
+                  .then(function(response) {
+                      console.log(response);
+                      vm.polls = response.data;
+                    }, function(err) {
+                      console.log("Screwed");
+                      console.log(err)
+                    })
+                  }
+
+            vm.deletePoll = function(id) {
+              console.log(id);
+              if(id !== null) {
+                  $http.delete('/api/polls/' + id).then(function(response) {
+                      vm.getPollsByUser();
+                    }, function(err) {
+                      console.log(err)
+                    })
+
+                  }
+                  else {
+                    return false;
+                  }
+                }
+
+            if(token) {
+              vm.currentUser = jwtHelper.decodeToken(token).data;
+              if(vm.currentUser !== null )  {
+                vm.getPollsByUser()
               }
-          }
+            }
+
+            vm.logOut = function() {
+            $window.localStorage.removeItem('token');
+            vm.message = 'Logging you out...'
+            $timeout(function() {
+                vm.message = '';
+                 $location.path('/');
+            }, 2000)
+        }
+
+    }
 }())
